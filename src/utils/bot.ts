@@ -81,8 +81,55 @@ export class TelegramBot {
     // Handle text messages that contain Instagram URLs
     this.bot.on('message:text', (ctx) => {
       this.logger.debug('Text message received');
-      this.instagramHandler.handleInstagramUrl(ctx);
+      const messageText = ctx.message.text;
+      
+      // Check if it's an Instagram link
+      if (this.instagramHandler.isInstagramUrl(messageText)) {
+        this.processInstagramUrl(ctx, messageText);
+      } else {
+        ctx.reply(
+          'Please send a valid Instagram link. It should look like:\n' +
+          'https://www.instagram.com/p/XXXX or\n' +
+          'https://www.instagram.com/reel/XXXX'
+        );
+      }
     });
+  }
+  
+  /**
+   * Process Instagram URL
+   */
+  private async processInstagramUrl(ctx: Context, url: string): Promise<void> {
+    this.logger.info(`Processing Instagram URL: ${url}`);
+    
+    try {
+      // Extract the shortcode
+      const shortcode = this.instagramHandler.extractShortcode(url);
+      if (!shortcode) {
+        await ctx.reply('Invalid Instagram URL. Could not extract post ID.');
+        return;
+      }
+      
+      await ctx.reply(`Processing Instagram URL with shortcode: ${shortcode}...`);
+      
+      // Fetch media items
+      const mediaItems = await this.instagramHandler.getMediaItems(shortcode);
+      
+      if (!mediaItems || mediaItems.length === 0) {
+        await ctx.reply('No media found or the post might be private/unavailable.');
+        return;
+      }
+      
+      await ctx.reply(`Found ${mediaItems.length} media items. Sending URLs...`);
+      
+      // Just send the URLs for now
+      for (const item of mediaItems) {
+        await ctx.reply(`${item.type}: ${item.url}`);
+      }
+    } catch (error) {
+      this.logger.error('Error processing Instagram URL:', error);
+      await ctx.reply('Failed to process Instagram URL. Please try again later.');
+    }
   }
 
   private setupErrorHandling(): void {
