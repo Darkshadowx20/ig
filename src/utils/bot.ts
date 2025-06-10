@@ -80,19 +80,15 @@ export class TelegramBot {
   private setupMessageHandlers(): void {
     // Handle text messages that contain Instagram URLs
     this.bot.on('message:text', (ctx) => {
-      this.logger.debug('Text message received');
       const messageText = ctx.message.text;
+      this.logger.debug('Text message received');
       
-      // Check if it's an Instagram link
+      // Only respond to Instagram links
       if (this.instagramHandler.isInstagramUrl(messageText)) {
+        this.logger.info('Instagram URL detected');
         this.processInstagramUrl(ctx, messageText);
-      } else {
-        ctx.reply(
-          'Please send a valid Instagram link. It should look like:\n' +
-          'https://www.instagram.com/p/XXXX or\n' +
-          'https://www.instagram.com/reel/XXXX'
-        );
       }
+      // Don't respond to non-Instagram messages at all
     });
   }
   

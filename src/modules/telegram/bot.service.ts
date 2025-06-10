@@ -244,20 +244,17 @@ export class BotService {
       ctx.session.lastUsed = new Date();
       
       try {
-        // Check if it's an Instagram link
+        // Only respond to Instagram links
         if (this.instagramHandler.isInstagramUrl(messageText)) {
+          this.logger.info('Instagram URL detected');
+          
           // Process Instagram URL - await to ensure it completes before handling next message
           await this.processInstagramUrl(ctx, messageText);
           
           // Update session
           ctx.session.totalProcessed++;
-        } else {
-          await ctx.reply(
-            'Please send a valid Instagram link. It should look like:\n' +
-            'https://www.instagram.com/p/XXXX or\n' +
-            'https://www.instagram.com/reel/XXXX'
-          );
         }
+        // Don't respond to non-Instagram messages at all
       } catch (error) {
         this.logger.error('Error handling message:', error);
       } finally {
